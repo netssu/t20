@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#120f19">
+  <meta name="description" content="Ficha digital automática de Tormenta20.">
+  <title>Tormenta20 — Ficha de Personagem</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./data.js" defer></script>
+  <script src="./spell-catalog.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span>20</span></div>
+        <div><p class="eyebrow">Crônicas de Arton</p><h1>Tormenta<span>20</span></h1></div>
+        <span class="edition">FICHA DIGITAL</span>
+      </div>
+      <div class="header-actions">
+        <span class="save-status" id="save-status" aria-live="polite">Salvo neste dispositivo</span>
+        <button class="button quiet" id="import-button" type="button">Importar</button>
+        <button class="button quiet" id="export-button" type="button">Exportar</button>
+        <button class="button quiet" id="print-button" type="button">Imprimir</button>
+        <button class="button danger-quiet" id="reset-button" type="button">Nova ficha</button>
+        <input id="import-file" type="file" accept=".json,application/json" hidden>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Seções da ficha">
+      <button class="tab active" type="button" data-tab="heroi">Herói</button>
+      <button class="tab" type="button" data-tab="combate">Combate</button>
+      <button class="tab" type="button" data-tab="pericias">Perícias &amp; poderes</button>
+      <button class="tab" type="button" data-tab="magias">Magias</button>
+      <button class="tab" type="button" data-tab="equipamento">Equipamento</button>
+    </nav>
+
+    <section class="pane active" id="pane-heroi">
+      <article class="card">
+        <div class="card-heading">
+          <div><p class="eyebrow">Identidade</p><h2>Quem se aventura?</h2></div>
+          <span class="rule-chip">Nível <strong id="level-summary">1</strong></span>
+        </div>
+        <div class="identity-grid">
+          <label class="field name-field"><span>Nome do personagem</span><input name="character_name" type="text" placeholder="Nome do herói" autocomplete="off"></label>
+          <label class="field"><span>Jogador</span><input name="player_name" type="text" placeholder="Seu nome"></label>
+          <label class="field"><span>Raça</span><select name="race"></select></label>
+          <label class="field"><span>Origem</span><select name="origin"></select></label>
+          <label class="field"><span>Classe</span><select name="class"></select></label>
+          <label class="field level-field"><span>Nível</span><input name="level" type="number" min="1" max="20" value="1"></label>
+          <label class="field"><span>Divindade</span><input name="deity" type="text" placeholder="Opcional"></label>
+          <label class="field"><span>XP</span><input name="xp" type="number" min="0" value="0"></label>
+          <label class="field"><span>Conceito / título</span><input name="concept" type="text" placeholder="Uma frase sobre o herói"></label>
+        </div>
+        <div class="choice-grid">
+          <label class="field"><span>Trilha / escolha de classe</span><input name="class_path" type="text" placeholder="Ex.: Mago, Bruxo ou Feiticeiro"></label>
+          <label class="field"><span>Forma de Suraggel</span><select name="race_variant"><option value="aggelus">Aggelus</option><option value="sulfure">Sulfure</option></select></label>
+          <label class="field"><span>Atributo-chave de magia</span><select name="magic_attribute"><option value="auto">Automático pela classe</option><option value="str">Força</option><option value="dex">Destreza</option><option value="con">Constituição</option><option value="int">Inteligência</option><option value="wis">Sabedoria</option><option value="cha">Carisma</option></select></label>
+        </div>
+        <div id="flex-race-box" class="flex-race-box" hidden>
+          <div><strong>Atributos flexíveis da raça</strong><span>Escolha três atributos diferentes para receber +1.</span></div>
+          <div class="flex-race-selects">
+            <select name="race_flex_1" aria-label="Primeiro atributo flexível"></select>
+            <select name="race_flex_2" aria-label="Segundo atributo flexível"></select>
+            <select name="race_flex_3" aria-label="Terceiro atributo flexível"></select>
+          </div>
+        </div>
+        <p id="race-traits" class="origin-items"></p>
+      </article>
+
+      <div class="main-columns">
+        <div class="column-stack">
+          <article class="card">
+            <div class="card-heading">
+              <div><p class="eyebrow">Atributos</p><h2>Valores básicos</h2></div>
+              <span id="point-buy" class="point-buy">Compra por pontos: 10 / 10</span>
+            </div>
+            <p class="helper">Edite os valores básicos. Os ajustes da raça são aplicados automaticamente ao valor final.</p>
+            <div id="attributes" class="attributes-grid"></div>
+            <div class="attribute-foot"><span>Baseia perícias, ataques e defesas.</span><span>Compra por pontos: máximo 10; reduza para −1 para recuperar 1 ponto.</span></div>
+          </article>
+
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Avanço</p><h2>Classe por nível</h2></div><span class="rule-chip">1–20</span></div>
+            <div id="class-track" class="class-track"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">História</p><h2>Descrição &amp; anotações</h2></div></div>
+            <div class="notes-grid">
+              <label class="field"><span>Aparência e personalidade</span><textarea name="description" rows="4" placeholder="Como o grupo reconhece seu personagem?"></textarea></label>
+              <label class="field"><span>Histórico, aliados e objetivos</span><textarea name="notes" rows="4" placeholder="Registre o que importa para a campanha."></textarea></label>
+            </div>
+          </article>
+        </div>
+
+        <div class="column-stack">
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Recursos</p><h2>PV &amp; PM</h2></div><span class="rule-chip">automáticos</span></div>
+            <div class="resource-grid">
+              <div class="resource-box health">
+                <div class="resource-title"><span>Pontos de vida</span><strong id="pv-max">0</strong></div>
+                <label class="field"><span>Atuais</span><input name="pv_current" type="number" min="0" value="0"></label>
+                <label class="field"><span>Outros bônus</span><input name="pv_other" type="number" value="0"></label>
+              </div>
+              <div class="resource-box mana">
+                <div class="resource-title"><span>Pontos de mana</span><strong id="pm-max">0</strong></div>
+                <label class="field"><span>Atuais</span><input name="pm_current" type="number" min="0" value="0"></label>
+                <label class="field"><span>Outros bônus</span><input name="pm_other" type="number" value="0"></label>
+              </div>
+            </div>
+            <div class="quick-stats">
+              <div><span>CD de magia</span><strong id="spell-dc">—</strong></div>
+              <div><span>PM máximos por habilidade</span><strong id="pm-limit">—</strong></div>
+              <div><span>Recuperação normal por descanso</span><strong id="rest-recovery">—</strong></div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Estado</p><h2>Recursos atuais</h2></div></div>
+            <div class="current-grid">
+              <label class="field"><span>Tamanho</span><select name="size"><option>Médio</option><option>Minúsculo</option><option>Pequeno</option><option>Grande</option><option>Enorme</option><option>Colossal</option></select></label>
+              <label class="field"><span>Deslocamento (m)</span><input name="speed" type="number" min="0" value="9"></label>
+              <label class="field"><span>Condição</span><input name="conditions" type="text" placeholder="Livre, abalado…"></label>
+            </div>
+            <div class="quick-stats compact">
+              <div><span>Iniciativa</span><strong id="initiative-value">+0</strong></div>
+              <div><span>Carga máxima</span><strong id="load-max">0 espaços</strong></div>
+              <div><span>Levantar</span><strong id="lift-max">0 espaços</strong></div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Origem</p><h2>Dois benefícios</h2></div><span class="rule-chip">escolha 2</span></div>
+            <p class="helper" id="origin-helper">Escolha até dois benefícios da origem; perícias selecionadas entram no cálculo automaticamente.</p>
+            <div class="origin-benefits">
+              <label class="field"><span>Benefício 1</span><select name="origin_benefit_1"></select></label>
+              <label class="field"><span>Benefício 2</span><select name="origin_benefit_2"></select></label>
+            </div>
+            <div id="origin-items" class="origin-items"></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-combate">
+      <div class="main-columns">
+        <div class="column-stack">
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Defesa</p><h2>Armadura &amp; escudo</h2></div><span class="rule-chip">calculada</span></div>
+            <div class="equipment-choice-grid">
+              <label class="field"><span>Armadura</span><select name="equipped_armor"></select></label>
+              <label class="field"><span>Escudo</span><select name="equipped_shield"></select></label>
+              <label class="field"><span>Outros bônus na Defesa</span><input name="defense_other" type="number" value="0"></label>
+              <label class="field"><span>Penalidade de armadura adicional</span><input name="armor_penalty_other" type="number" value="0"></label>
+            </div>
+            <div class="defense-banner"><div><span>Defesa total</span><strong id="defense-total">10</strong></div><p id="defense-breakdown">10 + atributo + armadura + escudo + outros</p></div>
+          </article>
+
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Ataques</p><h2>Armas &amp; testes</h2></div><span class="rule-chip">Luta / Pontaria</span></div>
+            <div class="inline-add">
+              <label class="field"><span>Adicionar arma do livro</span><select id="weapon-picker"></select></label>
+              <button class="button primary" id="add-weapon" type="button">Adicionar</button>
+            </div>
+            <div class="custom-add">
+              <input id="custom-attack-name" type="text" placeholder="Ataque personalizado">
+              <input id="custom-attack-damage" type="text" placeholder="Dano / tipo">
+              <button class="button quiet" id="add-custom-attack" type="button">Adicionar personalizado</button>
+            </div>
+            <div id="attacks-list" class="item-list"></div>
+          </article>
+        </div>
+        <div class="column-stack">
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Testes</p><h2>Resistências</h2></div></div>
+            <div class="save-grid" id="saves-grid"></div>
+            <p class="helper">Role ou registre circunstâncias; bônus de classe, poderes e itens entram no campo Outros de cada perícia.</p>
+          </article>
+          <article class="card">
+            <div class="card-heading"><div><p class="eyebrow">Rodada</p><h2>Marcadores rápidos</h2></div></div>
+            <div class="current-grid">
+              <label class="field"><span>PV temporários</span><input name="pv_temp" type="number" value="0"></label>
+              <label class="field"><span>PM temporários</span><input name="pm_temp" type="number" value="0"></label>
+              <label class="field"><span>XP</span><input name="xp_combat" type="number" min="0" value="0"></label>
+            </div>
+            <label class="field check-row"><input name="death_stable" type="checkbox"><span>Estabilizado / fora de perigo</span></label>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-pericias">
+      <article class="card">
+        <div class="card-heading"><div><p class="eyebrow">Perícias</p><h2>Treinamento &amp; rolagens</h2></div><span class="rule-chip" id="training-summary">0 treinadas</span></div>
+        <p class="helper">Valor = metade do nível + atributo-chave + treinamento (+2 até o 6º, +4 do 7º ao 14º, +6 do 15º em diante) + outros.</p>
+        <div class="table-wrap"><table class="skills-table">
+          <thead><tr><th>Treino</th><th>Perícia</th><th>Atributo</th><th>Valor</th><th>Outros</th><th></th></tr></thead>
+          <tbody id="skills-table"></tbody>
+        </table></div>
+        <div class="training-footer" id="training-footer"></div>
+      </article>
+
+      <div class="main-columns">
+        <article class="card">
+          <div class="card-heading"><div><p class="eyebrow">Habilidades</p><h2>Escolhas da ficha</h2></div></div>
+          <p class="helper">As habilidades liberadas pela classe aparecem em Classe por nível. Registre aqui poderes de origem, raça ou escolhas que queira acompanhar.</p>
+          <div class="inline-add">
+            <input id="power-name" type="text" placeholder="Nome do poder ou habilidade">
+            <input id="power-source" type="text" placeholder="Fonte / nível">
+            <button class="button primary" id="add-power" type="button">Adicionar</button>
+          </div>
+          <div id="powers-list" class="item-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-heading"><div><p class="eyebrow">Perícias</p><h2>Escolhas da classe</h2></div></div>
+          <p id="class-skills-summary" class="helper"></p>
+          <div id="class-training-help" class="training-help"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-magias">
+      <div class="main-columns">
+        <article class="card">
+          <div class="card-heading"><div><p class="eyebrow">Magia</p><h2>Catálogo do Livro Básico</h2></div><span class="rule-chip">227 entradas</span></div>
+          <p class="helper">Busque pelo nome, círculo ou escola. A ficha guarda seus próprios custos, execução e anotações.</p>
+          <div class="spell-picker-grid">
+            <label class="field"><span>Tipo</span><select id="spell-type"><option value="all">Todas</option><option value="arcana">Arcana</option><option value="divina">Divina</option></select></label>
+            <label class="field"><span>Círculo</span><select id="spell-circle"><option value="all">Todos</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label class="field spell-search"><span>Buscar magia</span><input id="spell-search" type="search" placeholder="Ex.: Curar Ferimentos"></label>
+          </div>
+          <div id="spell-catalog" class="spell-catalog"></div>
+        </article>
+        <article class="card">
+          <div class="card-heading"><div><p class="eyebrow">Conjurador</p><h2>CD &amp; limites</h2></div><span class="rule-chip">automáticos</span></div>
+          <div class="spell-metrics">
+            <div><span>CD de resistência</span><strong id="spell-dc-side">—</strong></div>
+            <div><span>Atributo-chave</span><strong id="spell-attribute-label">—</strong></div>
+            <div><span>Maior círculo por nível</span><strong id="max-circle">—</strong></div>
+            <div><span>Limite de gasto por habilidade</span><strong id="spell-pm-limit">—</strong></div>
+          </div>
+          <p class="helper">CD = 10 + metade do nível (arredondada para baixo) + atributo-chave. Arcanista usa Inteligência, exceto Feiticeiro (Carisma); Bardo, Carisma; Clérigo e Druida, Sabedoria.</p>
+          <label class="field"><span>Notas de conjuração</span><textarea name="magic_notes" rows="5" placeholder="Magias conhecidas, preparadas, foco, grimório…"></textarea></label>
+        </article>
+      </div>
+      <article class="card">
+        <div class="card-heading"><div><p class="eyebrow">Conhecidas</p><h2>Magias da ficha</h2></div><span id="spell-count" class="rule-chip">0 magias</span></div>
+        <div id="known-spells" class="spell-list"></div>
+      </article>
+    </section>
+
+    <section class="pane" id="pane-equipamento">
+      <div class="main-columns">
+        <article class="card">
+          <div class="card-heading"><div><p class="eyebrow">Arsenal</p><h2>Inventário &amp; carga</h2></div><span class="rule-chip" id="load-summary">0 / 0 espaços</span></div>
+          <div class="inline-add inventory-add">
+            <label class="field"><span>Adicionar item do catálogo</span><select id="item-picker"></select></label>
+            <button class="button primary" id="add-item" type="button">Adicionar</button>
+          </div>
+          <div class="custom-add">
+            <input id="custom-item-name" type="text" placeholder="Outro item">
+            <input id="custom-item-spaces" type="number" min="0" step="0.5" value="1" aria-label="Espaços ocupados">
+            <button class="button quiet" id="add-custom-item" type="button">Adicionar item personalizado</button>
+          </div>
+          <div id="inventory-list" class="item-list"></div>
+        </article>
+        <article class="card">
+          <div class="card-heading"><div><p class="eyebrow">Moedas</p><h2>Tibares</h2></div></div>
+          <div class="currency-grid">
+            <label class="field"><span>T$</span><input name="currency_t" type="number" min="0" value="0"></label>
+            <label class="field"><span>Notas</span><input name="currency_notes" type="text" placeholder="Bens, dívidas…"></label>
+          </div>
+          <div class="quick-stats compact">
+            <div><span>Espaços ocupados</span><strong id="load-used">0</strong></div>
+            <div><span>Capacidade (3 × Força)</span><strong id="load-max-side">0</strong></div>
+            <div><span>Levantar (10 × Força)</span><strong id="lift-max-side">0</strong></div>
+          </div>
+          <p id="load-warning" class="load-warning" hidden>O inventário ultrapassa sua carga máxima.</p>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer-note"><span>Salvamento automático local · Seus dados permanecem neste navegador.</span><span>Ficha estática pronta para GitHub Pages</span></footer>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+</body>
+</html>
